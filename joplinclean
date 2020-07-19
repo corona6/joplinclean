@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+
+show_help() {
+cat << EOF
+Usage:
+  $0 [-frtyh] path
+
+Examples:
+  # delete image or file that not used in the note
+  $0 /path/to/synchronise/directory
+
+  # delete the history (revisions) of the note which are already deleted
+  $0 -r /path/to/synchronise/directory
+
+  # delete the tags that not link to any notes
+  $0 -t /path/to/synchronise/directory
+
+Options:
+  -f, --force         Delete unused resources even if it's in the revision
+  -r, --revision      Delete unused revisions
+  -t, --tag           Delete unused tags
+  -y, --yes           Automatic yes to all prompts
+  -h, --help          Print this help
+EOF
+}
+
+cleanup() {
+  rm "$joplin_path/$1.md"
+  rm "$joplin_path/.resource/$1"
+  echo -n "deleted $joplin_path/.resource/$1"
+  echo
+}
+
+delete_file() {
+  rm "$1"
+  echo -n "deleted $1"
+  echo
+}
+
+ARGS=""
+while [ $# -gt 0 ]
+do
+  unset OPTIND
+  unset OPTARG
+  while getopts ":hfrty-:" opt; do
+    if [ "$opt" = "-" ]; then
+      opt=`echo ${OPTARG}`
+    fi
+    case "$opt" in
+      h | help)
+        show_help
+        exit 0
+        ;;
+      f | force)
+        force=true
+        ;;
+      r | revision)
+        revision=true
+        ;;
+      t | tag)
+        tag=true
+        ;;
+      y | yes)
+        skip_prompt=true
+        ;;
+    esac
+  done
+  shift $((OPTIND-1))
+  ARGS="${ARGS}$1"
+  shift
+done
+
+if [ "$ARGS" = "" ]; then
+  show_help
+  exit 1
+fi
+
+joplin_path=$ARGS
+
+if [ $revision ]; then
+  item_ids=($(grep -lr -E "^type_: 13$" ${joplin_path} | xargs grep -E "^item_id:" | awk '{ print $2 }' | sort | uniq))
+  for item_id in ${item_ids[@]}; do
+    if [ ! -e "$joplin_path/$item_id.md" ]; then
+      revision_files=($(grep -lr -E "^item_id: $item_id$" ${joplin_path}))
+      for revision_file in ${revision_files[@]}; do
+        if [ ! $skip_prompt ]; then
+          read -p "delete $revision_file ? (y/n) " answer
+          if [ ! $answer = "y" ]; then
+            continue
+          fi
+        fi
+        delete_file $revision_file
+      done
+    fi
+  done
+elif [ $tag ]; then
+  tag_links=($(grep -lr -E "^type_: 6$" ${joplin_path} | xargs grep -E "^note_id:" | awk '{ print $1 $2 }'))
+  for tag_link in ${tag_links[@]}; do
+    note_id=($(echo ${tag_link} | awk -F ':' '{ print $3 }'))
+    if [ ! -e "$joplin_path/$note_id.md" ]; then
+      tag_link_file=($(echo ${tag_link} | awk -F ':' '{ print $1 }'))
+      if [ ! $skip_prompt ]; then
+        read -p "delete $tag_link_file ? (y/n) " answer
+        if [ ! $answer = "y" ]; then
+          continue
+        fi
+      fi
+      delete_file $tag_link_file
+    fi
+  done
+  tag_files=($(grep -lr -E "^type_: 5$" ${joplin_path}))
+  for tag_file in ${tag_files[@]}; do
+    file_name=${tag_file##*/}
+    tag_id=${file_name%.md}
+    check=$(grep -lr -E "^tag_id: $tag_id$" ${joplin_path} | wc -l)
+    if [ $check -eq 0 ]; then
+      if [ ! $skip_prompt ]; then
+        read -p "delete $tag_file ? (y/n) " answer
+        if [ ! $answer = "y" ]; then
+          continue
+        fi
+      fi
+      delete_file $tag_file
+    fi
+  done
+else
+  resources=($(ls ${joplin_path}/.resource))
+  for resource in ${resources[@]}; do
+    if [ $force ]; then
+      check=$(grep -lr ${resource} ${joplin_path} | xargs grep -E "^type_: 1$" | wc -l)
+    else
+      check=$(grep -lr ${resource} ${joplin_path} | wc -l)
+      ((check=check-1))
+    fi
+    if [ $check -eq 0 ]; then
+      if [ ! $skip_prompt ]; then
+        read -p "delete $joplin_path/.resource/$resource ? (y/n) " answer
+        if [ ! $answer = "y" ]; then
+          continue
+        fi
+      fi
+      cleanup $resource
+    fi
+  done
+fi
