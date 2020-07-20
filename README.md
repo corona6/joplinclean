@@ -1,6 +1,9 @@
 # joplinclean
 delete unused resources/revisions/tags for [Joplin](https://joplinapp.org/)
 
+- This is does not support for encryption.
+- Only can use for file system synchronise.
+
 ## Install
 
 ```
