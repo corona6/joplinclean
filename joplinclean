@@ -3,17 +3,17 @@
 show_help() {
 cat << EOF
 Usage:
-  $0 [-frtyh] path
+  $(basename $0) [-frtyh] absolute-path
 
 Examples:
   # delete image or file that not used in the note
-  $0 /path/to/synchronise/directory
+  $(basename $0) /path/to/synchronise/directory
 
   # delete the history (revisions) of the note which are already deleted
-  $0 -r /path/to/synchronise/directory
+  $(basename $0) -r /path/to/synchronise/directory
 
   # delete the tags that not link to any notes
-  $0 -t /path/to/synchronise/directory
+  $(basename $0) -t /path/to/synchronise/directory
 
 Options:
   -f, --force         Delete unused resources even if it's in the revision
