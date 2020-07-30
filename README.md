@@ -18,7 +18,7 @@ $ sudo ln -s ~/.joplinclean-bin/joplinclean /usr/local/bin/joplinclean
 
 ```
 Usage:
-  joplinclean [-frtyh] absolute-path
+  joplinclean [options] absolute-path
 
 Examples:
   # delete image or file that not used in the note
@@ -31,6 +31,7 @@ Examples:
   joplinclean -t /path/to/synchronise/directory
 
 Options:
+  -d, --data          Delete unused resources
   -f, --force         Delete unused resources even if it's in the revision
   -r, --revision      Delete unused revisions
   -t, --tag           Delete unused tags

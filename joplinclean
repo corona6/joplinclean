@@ -3,7 +3,7 @@
 show_help() {
 cat << EOF
 Usage:
-  $(basename $0) [-frtyh] absolute-path
+  $(basename $0) [options] absolute-path
 
 Examples:
   # delete image or file that not used in the note
@@ -16,6 +16,7 @@ Examples:
   $(basename $0) -t /path/to/synchronise/directory
 
 Options:
+  -d, --data          Delete unused resources
   -f, --force         Delete unused resources even if it's in the revision
   -r, --revision      Delete unused revisions
   -t, --tag           Delete unused tags
@@ -42,7 +43,7 @@ while [ $# -gt 0 ]
 do
   unset OPTIND
   unset OPTARG
-  while getopts ":hfrty-:" opt; do
+  while getopts ":dhfrty-:" opt; do
     if [ "$opt" = "-" ]; then
       opt=`echo ${OPTARG}`
     fi
@@ -50,6 +51,9 @@ do
       h | help)
         show_help
         exit 0
+        ;;
+      d | data)
+        data=true
         ;;
       f | force)
         force=true
@@ -93,7 +97,9 @@ if [ $revision ]; then
       done
     fi
   done
-elif [ $tag ]; then
+fi
+
+if [ $tag ]; then
   tag_links=($(grep -lr -E "^type_: 6$" ${joplin_path} | xargs grep -E "^note_id:" | awk '{ print $1 $2 }'))
   for tag_link in ${tag_links[@]}; do
     note_id=($(echo ${tag_link} | awk -F ':' '{ print $3 }'))
@@ -123,7 +129,9 @@ elif [ $tag ]; then
       delete_file $tag_file
     fi
   done
-else
+fi
+
+if [[ $data || ( ! $revision && ! $tag ) ]]; then
   resources=($(ls ${joplin_path}/.resource))
   for resource in ${resources[@]}; do
     if [ $force ]; then
