@@ -26,19 +26,19 @@ EOF
 }
 
 cleanup() {
-  rm "$joplin_path/$1.md"
-  rm "$joplin_path/.resource/$1"
+  # rm "$joplin_path/$1.md"
+  # rm "$joplin_path/.resource/$1"
   echo -n "deleted $joplin_path/.resource/$1"
   echo
 }
 
 delete_file() {
-  rm "$1"
+  # rm "$1"
   echo -n "deleted $1"
   echo
 }
 
-ARGS=""
+ARGS=()
 while [ $# -gt 0 ]
 do
   unset OPTIND
@@ -64,13 +64,19 @@ do
       t | tag)
         tag=true
         ;;
+      archive)
+        archive=true
+        ;;
+      import)
+        import=true
+        ;;
       y | yes)
         skip_prompt=true
         ;;
     esac
   done
   shift $((OPTIND-1))
-  ARGS="${ARGS}$1"
+  ARGS+=("$1")
   shift
 done
 
@@ -79,7 +85,7 @@ if [ "$ARGS" = "" ]; then
   exit 1
 fi
 
-joplin_path=$ARGS
+joplin_path=${ARGS[0]}
 
 if [ $revision ]; then
   item_ids=($(grep -lr -E "^type_: 13$" ${joplin_path} | xargs grep -E "^item_id:" | awk '{ print $2 }' | sort | uniq))
@@ -131,7 +137,25 @@ if [ $tag ]; then
   done
 fi
 
-if [[ $data || ( ! $revision && ! $tag ) ]]; then
+if [ $archive ]; then
+  notebook=($(grep -lr -E "^type_: 2$" ${joplin_path} | xargs grep -x "${ARGS[1]}" | awk -F ':' '{ print $1 }'))
+  notebook_file_name=${notebook##*/}
+  notebook_id=${notebook_file_name%.md}
+  notes=($(grep -lrx "parent_id: ${notebook_id}" ${joplin_path}))
+  tmpdir=$(mktemp -d)
+  trap "rm -rf $tmpdir" EXIT
+  for note in ${notes[@]}; do
+    mv "$note" "$tmpdir"
+  done
+  mv "$notebook" "$tmpdir"
+  zip -jr "${ARGS[2]}" "$tmpdir"
+fi
+
+if [ $import ]; then
+  unzip -d "${joplin_path}" "${ARGS[1]}"
+fi
+
+if [[ $data || ( ! $revision && ! $tag && ! $archive && ! $import ) ]]; then
   resources=($(ls ${joplin_path}/.resource))
   for resource in ${resources[@]}; do
     if [ $force ]; then
