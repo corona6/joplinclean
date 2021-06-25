@@ -166,7 +166,16 @@ if [ $archive ]; then
 fi
 
 if [ $import ]; then
-  unzip -d "${joplin_path}" "${ARGS[1]}"
+  tmpdir=$(mktemp -d)
+  trap "rm -rf $tmpdir" EXIT
+  unzip -d "${tmpdir}" "${ARGS[1]}"
+  cd "$tmpdir"
+  touch *
+  cd .resource
+  touch *
+  cd ..
+  mv * "${joplin_path}"
+  mv .resource/* "${joplin_path}/.resource/"
 fi
 
 if [[ $data || ( ! $revision && ! $tag && ! $archive && ! $import ) ]]; then
