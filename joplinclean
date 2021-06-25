@@ -139,6 +139,10 @@ fi
 
 if [ $archive ]; then
   notebook=($(grep -lr -E "^type_: 2$" ${joplin_path} | xargs grep -x "${ARGS[1]}" | awk -F ':' '{ print $1 }'))
+  if [ ${#notebook[@]} -eq 0 ]; then
+    echo -n "No such notebook"
+    exit 1
+  fi
   notebook_file_name=${notebook##*/}
   notebook_id=${notebook_file_name%.md}
   notes=($(grep -lrx "parent_id: ${notebook_id}" ${joplin_path}))
