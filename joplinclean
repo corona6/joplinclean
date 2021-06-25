@@ -148,11 +148,21 @@ if [ $archive ]; then
   notes=($(grep -lrx "parent_id: ${notebook_id}" ${joplin_path}))
   tmpdir=$(mktemp -d)
   trap "rm -rf $tmpdir" EXIT
+  mkdir "${tmpdir}/.resource/"
   for note in ${notes[@]}; do
     mv "$note" "$tmpdir"
   done
   mv "$notebook" "$tmpdir"
-  zip -jr "${ARGS[2]}" "$tmpdir"
+  resources=($(ls ${joplin_path}/.resource))
+  for resource in ${resources[@]}; do
+    check=$(grep -lr ${resource} ${tmpdir} | xargs grep -E "^type_: 1$" | wc -l)
+    if [ $check -ne 0 ]; then
+      mv "${joplin_path}/.resource/${resource}" "${tmpdir}/.resource/"
+      mv "${joplin_path}/${resource}.md" "$tmpdir"
+    fi
+  done
+  cd "$tmpdir"
+  zip -r "${ARGS[2]}" .
 fi
 
 if [ $import ]; then
