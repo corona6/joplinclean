@@ -32,7 +32,7 @@ Examples:
   # delete the tags that not link to any notes
   joplinclean -t /path/to/synchronise/directory
 
-  # archive notebook will delete from Joplin and create zip file
+  # archive notebook will delete one notebook from Joplin and create zip file
   joplinclean /path/to/synchronise/directory --archive notebook-name /path/to/archive/notebook-name.zip
 
   # import notebook from zip file
