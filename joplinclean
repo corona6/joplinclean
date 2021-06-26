@@ -15,6 +15,12 @@ Examples:
   # delete the tags that not link to any notes
   $(basename $0) -t /path/to/synchronise/directory
 
+  # archive notebook will delete one notebook from Joplin and create zip file
+  $(basename $0) /path/to/synchronise/directory --archive notebook-name /path/to/archive/notebook-name.zip
+
+  # import notebook from zip file
+  $(basename $0) /path/to/synchronise/directory --import /path/to/archive/notebook-name.zip
+
 Options:
   -d, --data          Delete unused resources
   -f, --force         Delete unused resources even if it's in the revision
@@ -22,18 +28,20 @@ Options:
   -t, --tag           Delete unused tags
   -y, --yes           Automatic yes to all prompts
   -h, --help          Print this help
+  --archive           Archive notebook (Sub-notebooks are not supported)
+  --import            Import notebook
 EOF
 }
 
 cleanup() {
-  # rm "$joplin_path/$1.md"
-  # rm "$joplin_path/.resource/$1"
+  rm "$joplin_path/$1.md"
+  rm "$joplin_path/.resource/$1"
   echo -n "deleted $joplin_path/.resource/$1"
   echo
 }
 
 delete_file() {
-  # rm "$1"
+  rm "$1"
   echo -n "deleted $1"
   echo
 }

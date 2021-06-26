@@ -32,6 +32,12 @@ Examples:
   # delete the tags that not link to any notes
   joplinclean -t /path/to/synchronise/directory
 
+  # archive notebook will delete from Joplin and create zip file
+  joplinclean /path/to/synchronise/directory --archive notebook-name /path/to/archive/notebook-name.zip
+
+  # import notebook from zip file
+  joplinclean /path/to/synchronise/directory --import /path/to/archive/notebook-name.zip
+
 Options:
   -d, --data          Delete unused resources
   -f, --force         Delete unused resources even if it's in the revision
@@ -39,6 +45,8 @@ Options:
   -t, --tag           Delete unused tags
   -y, --yes           Automatic yes to all prompts
   -h, --help          Print this help
+  --archive           Archive notebook (Sub-notebooks are not supported)
+  --import            Import notebook
 ```
 
 ## Example
